@@ -1,14 +1,14 @@
 -- Migration: Digital Renforcy Backend
--- Run this in your Supabase SQL Editor
+-- Rejouable a tout moment sans erreur (IF NOT EXISTS partout)
+-- Copiez et executez l'integralite dans le SQL Editor Supabase
 
--- Leads table: stores contact form submissions
+-- ── Leads ──────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS leads (
     id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name             TEXT NOT NULL,
     phone            TEXT NOT NULL,
     sector           TEXT NOT NULL CHECK (sector IN ('renovation', 'formation', 'autre')),
     source           TEXT NOT NULL DEFAULT 'form',
-    -- Extended fields from the multi-step contact form
     email            TEXT,
     first_name       TEXT,
     last_name        TEXT,
@@ -26,10 +26,25 @@ CREATE TABLE IF NOT EXISTS leads (
     created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Index for chronological queries
+-- Colonnes ajoutees apres la creation initiale (sans erreur si deja presentes)
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS email            TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS first_name       TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS last_name        TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS service          TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS formule          TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS company_name     TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS company_size     TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS situation        TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS objectif         TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS website          TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS discovery_source TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS callback_date    TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS callback_time    TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS consent          BOOLEAN DEFAULT FALSE;
+
 CREATE INDEX IF NOT EXISTS idx_leads_created_at ON leads (created_at DESC);
 
--- Chat sessions table: stores conversation history per session
+-- ── Chat sessions ───────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS chat_sessions (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     session_id  TEXT NOT NULL UNIQUE,
@@ -40,7 +55,7 @@ CREATE TABLE IF NOT EXISTS chat_sessions (
 
 CREATE INDEX IF NOT EXISTS idx_chat_sessions_session_id ON chat_sessions (session_id);
 
--- Auto-update updated_at on chat_sessions
+-- ── Trigger updated_at ──────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -49,17 +64,19 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS chat_sessions_updated_at ON chat_sessions;
 CREATE TRIGGER chat_sessions_updated_at
     BEFORE UPDATE ON chat_sessions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
--- Row Level Security: service role bypasses RLS (used server-side only)
+-- ── Row Level Security ──────────────────────────────────────────────────────
 ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_sessions ENABLE ROW LEVEL SECURITY;
 
--- Only the service role can read/write (backend uses service key)
+DROP POLICY IF EXISTS "service_role_leads" ON leads;
 CREATE POLICY "service_role_leads" ON leads
     USING (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "service_role_chat_sessions" ON chat_sessions;
 CREATE POLICY "service_role_chat_sessions" ON chat_sessions
     USING (auth.role() = 'service_role');

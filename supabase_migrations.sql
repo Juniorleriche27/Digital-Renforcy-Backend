@@ -3,12 +3,27 @@
 
 -- Leads table: stores contact form submissions
 CREATE TABLE IF NOT EXISTS leads (
-    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name        TEXT NOT NULL,
-    phone       TEXT NOT NULL,
-    sector      TEXT NOT NULL CHECK (sector IN ('renovation', 'formation', 'autre')),
-    source      TEXT NOT NULL DEFAULT 'form',
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name             TEXT NOT NULL,
+    phone            TEXT NOT NULL,
+    sector           TEXT NOT NULL CHECK (sector IN ('renovation', 'formation', 'autre')),
+    source           TEXT NOT NULL DEFAULT 'form',
+    -- Extended fields from the multi-step contact form
+    email            TEXT,
+    first_name       TEXT,
+    last_name        TEXT,
+    service          TEXT,
+    formule          TEXT,
+    company_name     TEXT,
+    company_size     TEXT,
+    situation        TEXT,
+    objectif         TEXT,
+    website          TEXT,
+    discovery_source TEXT,
+    callback_date    TEXT,
+    callback_time    TEXT,
+    consent          BOOLEAN DEFAULT FALSE,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Index for chronological queries

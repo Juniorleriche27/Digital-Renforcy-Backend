@@ -1,19 +1,26 @@
-from pydantic import BaseModel, field_validator
-from typing import Literal
+from pydantic import BaseModel
+from typing import Optional
 
 
 class LeadCreate(BaseModel):
-    name: str
-    phone: str
-    sector: Literal["renovation", "formation", "autre"]
+    name: str = ""
+    phone: str = ""
+    sector: str = "autre"
     source: str = "form"
-
-    @field_validator("name", "phone")
-    @classmethod
-    def not_empty(cls, v: str) -> str:
-        if not v.strip():
-            raise ValueError("Ce champ est obligatoire.")
-        return v.strip()
+    email: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    service: Optional[str] = None
+    formule: Optional[str] = None
+    company_name: Optional[str] = None
+    company_size: Optional[str] = None
+    situation: Optional[str] = None
+    objectif: Optional[str] = None
+    website: Optional[str] = None
+    discovery_source: Optional[str] = None
+    callback_date: Optional[str] = None
+    callback_time: Optional[str] = None
+    consent: Optional[bool] = None
 
 
 class LeadResponse(BaseModel):

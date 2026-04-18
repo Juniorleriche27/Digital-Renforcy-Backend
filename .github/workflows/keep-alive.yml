@@ -1,0 +1,15 @@
+name: Keep Render Awake
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"  # toutes les 10 minutes
+  workflow_dispatch:         # permet de lancer manuellement
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend
+        run: |
+          curl -s https://digital-renforcy-backend.onrender.com/api/health
+          echo "Backend pinged at $(date)"
